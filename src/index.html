@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat with Typing Notifications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #eee;
+        }
+
+        .message {
+            margin-bottom: 15px;
+        }
+
+        .message p {
+            margin: 0;
+        }
+
+        .typing-indicator {
+            padding: 10px 20px;
+            color: #888;
+        }
+
+        .input-container {
+            display: flex;
+            border-top: 1px solid #eee;
+        }
+
+        #inputField {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-right: 1px solid #eee;
+            font-size: 16px;
+        }
+
+        #sendButton {
+            padding: 15px 20px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #sendButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="header">
+        <h1>WebSocket Chat with Typing Notifications</h1>
+    </div>
+    <div id="messages" class="messages"></div>
+    <div id="typingIndicator" class="typing-indicator"></div>
+    <div class="input-container">
+        <input type="text" id="inputField" placeholder="Type something..." />
+        <button id="sendButton">Send</button>
+    </div>
+</div>
+
+<script>
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onopen = () => {
+        console.log('Connected to WebSocket server');
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const messages = document.getElementById('messages');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        if (data.type === 'message') {
+            typingIndicator.innerHTML = '';
+            messages.innerHTML += `<div class="message"><p><strong>${data.user}:</strong> ${data.text}</p></div>`;
+            messages.scrollTop = messages.scrollHeight; // Scroll to the bottom
+        } else if (data.type === 'typing') {
+            typingIndicator.innerHTML = `${data.user} is typing...`;
+            setTimeout(() => {
+                typingIndicator.innerHTML = '';
+            }, 1000);
+        }
+    };
+
+    ws.onclose = () => {
+        console.log('Disconnected from WebSocket server');
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+
+    const inputField = document.getElementById('inputField');
+    const sendButton = document.getElementById('sendButton');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    let typingTimeout;
+    inputField.addEventListener('input', () => {
+        clearTimeout(typingTimeout);
+        const typingMessage = {
+            type: 'typing',
+            user: 'User1',  // In a real app, replace with the actual username
+            channel: 'general'
+        };
+        ws.send(JSON.stringify(typingMessage));
+
+        typingTimeout = setTimeout(() => {
+            typingIndicator.innerHTML = '';
+        }, 1000);
+    });
+
+    sendButton.addEventListener('click', () => {
+        if (inputField.value.trim() !== '') {
+            const message = {
+                type: 'message',
+                user: 'User1',  // In a real app, replace with the actual username
+                text: inputField.value,
+                timestamp: Date.now(),
+                channel: 'general'
+            };
+            ws.send(JSON.stringify(message));
+            inputField.value = '';
+        }
+    });
+
+    inputField.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            sendButton.click();
+        }
+    });
+</script>
+</body>
+</html>

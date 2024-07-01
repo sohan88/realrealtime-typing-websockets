@@ -1,0 +1,19 @@
+{
+  "name": "ws-redis-project",
+  "version": "1.0.0",
+  "description": "sample project to understand how user/client is notified when user is typing message",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "sohanb",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "http": "^0.0.1-security",
+    "http-server": "^14.1.1",
+    "redis": "^4.6.14",
+    "uuid": "^9.0.1",
+    "ws": "^8.17.0"
+  }
+}
